@@ -429,6 +429,27 @@ a.icon-btn { text-decoration: none; }
 .swipe-legend-a .swipe-legend-badge { background: var(--primary); }
 .swipe-legend-b .swipe-legend-badge { background: #c2540a; }
 
+.swipe-growth {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #f4f9f6;
+  border-left: 4px solid #2ecc71;
+}
+.swipe-growth .swipe-legend-title { margin: 0 0 8px 2px; }
+.growth-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-top: 1px dashed var(--border);
+}
+.growth-row:first-of-type { border-top: none; }
+.growth-name { flex: 1; color: var(--text); font-weight: 600; }
+.growth-areas { color: var(--text-muted); white-space: nowrap; }
+
 /* Ferramenta de swipe entre duas ortofotos */
 .swipe-divider {
   position: absolute;

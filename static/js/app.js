@@ -625,7 +625,7 @@
           }
         );
       }
-      orthoByFlight[key].addTo(map);
+      if (!swipeActive) { orthoByFlight[key].addTo(map); }
     } else if (orthoByFlight[key] && map.hasLayer(orthoByFlight[key])) {
       map.removeLayer(orthoByFlight[key]);
     }
@@ -645,10 +645,12 @@
     }
 
     if (vegByFlight[key]) {
-      Object.keys(vegByFlight[key]).forEach(function (cid) {
-        var lk = legKey(pid, cid);
-        if (legend[lk] && legend[lk].visible) { map.addLayer(vegByFlight[key][cid]); }
-      });
+      if (!swipeActive) {
+        Object.keys(vegByFlight[key]).forEach(function (cid) {
+          var lk = legKey(pid, cid);
+          if (legend[lk] && legend[lk].visible) { map.addLayer(vegByFlight[key][cid]); }
+        });
+      }
       return;
     }
 
@@ -677,7 +679,7 @@
             onEachFeature: function (feature, layer) { bindFeatureInteraction(layer, feature, function () { return styleForClass(lk); }); }
           });
           groups[cid] = group;
-          if (legend[lk].visible && activeVeg[key]) { group.addTo(map); }
+          if (legend[lk].visible && activeVeg[key] && !swipeActive) { group.addTo(map); }
         });
         vegByFlight[key] = groups;
       })
@@ -1104,6 +1106,7 @@
     if (!swipeSelectA.value || !swipeSelectB.value) { return; }
     var a = flightFromSelectValue(swipeSelectA.value);
     var b = flightFromSelectValue(swipeSelectB.value);
+    renderGrowthIndex(a, b);
 
     sizeSwipePanes();
     map.on("move zoom", onMapMoveDuringSwipe);
@@ -1138,6 +1141,7 @@
     btnSwipeToggle.classList.add("active");
     renderChartPanel(); // esconde o grafico -- nao faz sentido durante a comparacao
     updateLegendPanelVisibility(); // esconde a legenda geral -- cada lado tem a sua propria
+    hideNormalMapLayers(); // ver funcao: sem isso, classe desmarcada num lado do swipe deixava a camada normal aparecer por baixo
 
     buildSwipeLayers(a, "swipePaneA", "a").then(function (items) {
       swipeLayers.a = items;
@@ -1163,6 +1167,8 @@
     swipeLayers.b = null;
     swipeLegend.a = {};
     swipeLegend.b = {};
+    var growthEl = document.getElementById("swipeGrowthIndex");
+    if (growthEl) { growthEl.innerHTML = ""; growthEl.hidden = true; }
     ["swipeLegendA", "swipeLegendB"].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) { el.innerHTML = ""; el.hidden = true; }
@@ -1177,6 +1183,87 @@
     btnSwipeToggle.classList.remove("active");
     renderChartPanel(); // volta a mostrar o grafico do estado normal do mapa
     updateLegendPanelVisibility(); // volta a mostrar a legenda geral
+    restoreNormalMapLayers();
+  }
+
+  // O swipe so' recorta/mostra as camadas dos proprios panes (swipePaneA/B).
+  // Se a visualizacao normal do mapa (fora do swipe) continuar com camadas
+  // ligadas por baixo, qualquer classe DESMARCADA num lado do swipe deixa
+  // aquele pedaco "vazio" e a camada normal (nao recortada) aparece por
+  // baixo -- por isso a visualizacao normal fica pausada (removida do mapa,
+  // mas o estado ativo/checkbox continua guardado) enquanto o swipe estiver
+  // ativo, e volta sozinha quando o swipe e' desativado.
+  function hideNormalMapLayers() {
+    Object.keys(orthoByFlight).forEach(function (key) {
+      if (map.hasLayer(orthoByFlight[key])) { map.removeLayer(orthoByFlight[key]); }
+    });
+    Object.keys(vegByFlight).forEach(function (key) {
+      Object.keys(vegByFlight[key]).forEach(function (cid) {
+        if (map.hasLayer(vegByFlight[key][cid])) { map.removeLayer(vegByFlight[key][cid]); }
+      });
+    });
+  }
+  function restoreNormalMapLayers() {
+    Object.keys(activeOrtho).forEach(function (key) {
+      if (activeOrtho[key] && orthoByFlight[key]) { orthoByFlight[key].addTo(map); }
+    });
+    Object.keys(activeVeg).forEach(function (key) {
+      if (!activeVeg[key] || !vegByFlight[key]) { return; }
+      var pid = pidFromFlightKey(key);
+      Object.keys(vegByFlight[key]).forEach(function (cid) {
+        var lk = legKey(pid, cid);
+        if (legend[lk] && legend[lk].visible) { map.addLayer(vegByFlight[key][cid]); }
+      });
+    });
+  }
+
+  // Indice de crescimento -- so' faz sentido comparando dois voos DO MESMO
+  // projeto+bloco (senao "crescimento" nao tem significado). Usa as
+  // estatisticas ja calculadas no build (fl.classes), nao precisa de
+  // analise espacial/overlay de poligono -- e' uma comparacao de area por
+  // classe entre os dois voos, nao "onde exatamente" a vegetacao mudou.
+  function renderGrowthIndex(a, b) {
+    var container = document.getElementById("swipeGrowthIndex");
+    if (!container) { return; }
+    var sameLocation = a.type === "veg" && b.type === "veg" &&
+      a.pid === b.pid && (a.block || null) === (b.block || null) && a.date !== b.date;
+    if (!sameLocation) {
+      container.innerHTML = "";
+      container.hidden = true;
+      return;
+    }
+
+    var older = a.date < b.date ? a : b;
+    var newer = a.date < b.date ? b : a;
+    var olderByName = {}, newerByName = {};
+    (older.meta.classes || []).forEach(function (c) { olderByName[c.name] = c.areaM2; });
+    (newer.meta.classes || []).forEach(function (c) { newerByName[c.name] = c.areaM2; });
+
+    var names = [];
+    Object.keys(olderByName).concat(Object.keys(newerByName)).forEach(function (n) {
+      if (names.indexOf(n) === -1 && defaultChartIncluded(n)) { names.push(n); }
+    });
+
+    var rowsHtml = names.map(function (name) {
+      var areaOld = olderByName[name] || 0;
+      var areaNew = newerByName[name] || 0;
+      var delta = areaNew - areaOld;
+      var deltaPct = areaOld > 0 ? (delta / areaOld * 100) : (areaNew > 0 ? 100 : 0);
+      var trendClass = Math.abs(delta) < 1 ? "dash-trend-flat" : (delta > 0 ? "dash-trend-up" : "dash-trend-down");
+      var arrow = Math.abs(delta) < 1 ? "≈" : (delta > 0 ? "▲" : "▼");
+      return (
+        '<div class="growth-row">' +
+          '<span class="growth-name">' + escapeHtml(name) + "</span>" +
+          '<span class="growth-areas">' + fmtArea(areaOld) + " → " + fmtArea(areaNew) + "</span>" +
+          '<span class="dash-trend ' + trendClass + '">' + arrow + " " + (deltaPct >= 0 ? "+" : "") + deltaPct.toFixed(1) + "%</span>" +
+        "</div>"
+      );
+    }).join("");
+
+    container.hidden = false;
+    container.innerHTML =
+      '<div class="swipe-legend-title">Índice de crescimento — ' + fmtDate(older.date) + " → " + fmtDate(newer.date) + "</div>" +
+      rowsHtml;
   }
 
   function onMapMoveDuringSwipe() { setSwipePosition(swipeCurrentPct); }
