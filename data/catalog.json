@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07 15:54",
+  "generatedAt": "2026-09-07 16:25",
   "projects": [
     {
       "id": "solar-lavras",
@@ -49,6 +49,53 @@
               "name": "Painel/Estrutura",
               "count": 200,
               "areaM2": 29631.96
+            }
+          ]
+        },
+        {
+          "date": "2026-08-03",
+          "block": "PCS09",
+          "bounds": [
+            [
+              -3.80095693409,
+              -38.931306
+            ],
+            [
+              -3.796731,
+              -38.92848722332
+            ]
+          ],
+          "hasOrtho": true,
+          "hasVegetation": true,
+          "tiles": "solar-lavras/2026-08-03--pcs09/tiles",
+          "tileExt": "webp",
+          "minNativeZoom": 15,
+          "maxNativeZoom": 21,
+          "vegetation": "solar-lavras/2026-08-03--pcs09/vegetacao_4326.geojson",
+          "classes": [
+            {
+              "id": 1,
+              "name": "Solo",
+              "count": 581,
+              "areaM2": 45945.99
+            },
+            {
+              "id": 2,
+              "name": "Vegetacao Baixa (Roco)",
+              "count": 1396,
+              "areaM2": 35993.14
+            },
+            {
+              "id": 3,
+              "name": "Vegetacao Alta",
+              "count": 274,
+              "areaM2": 1906.43
+            },
+            {
+              "id": 4,
+              "name": "Painel/Estrutura",
+              "count": 141,
+              "areaM2": 44843.02
             }
           ]
         }
