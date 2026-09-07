@@ -889,7 +889,9 @@
   // ------------------------------------------------------------------
   var swipeSelectA = document.getElementById("swipeA");
   var swipeSelectB = document.getElementById("swipeB");
+  var swipeRefOrthoSelect = document.getElementById("swipeRefOrtho");
   var btnSwipeToggle = document.getElementById("btnSwipeToggle");
+  var swipeRefOrthoLayer = null; // ortofoto de fundo opcional, comum aos dois lados (nao e' recortada pelo divisor)
   var swipeActive = false;
   var swipeCurrentPct = 50;
   // cada lado e' um array de { cid, layer } -- cid e' null pra ortofoto
@@ -904,11 +906,15 @@
 
   function populateSwipeSelects() {
     var opts = [];
+    var orthoOpts = ['<option value="">Nenhuma</option>'];
     projectOrder.forEach(function (pid) {
       projects[pid].flights.forEach(function (fl) {
         var base = pid + "|" + fl.date + "|" + (fl.block || "");
         var label = projects[pid].name + (fl.block ? " / " + fl.block : "") + " — " + fmtDate(fl.date);
-        if (fl.hasOrtho) { opts.push('<option value="' + base + '|ortho">' + escapeHtml(label) + " (Ortofoto)</option>"); }
+        if (fl.hasOrtho) {
+          opts.push('<option value="' + base + '|ortho">' + escapeHtml(label) + " (Ortofoto)</option>");
+          orthoOpts.push('<option value="' + base + '">' + escapeHtml(label) + "</option>");
+        }
         if (fl.hasVegetation) { opts.push('<option value="' + base + '|veg">' + escapeHtml(label) + " (Vegetação)</option>"); }
       });
     });
@@ -918,6 +924,7 @@
     document.getElementById("swipePanel").hidden = opts.length === 0;
     updateSwipeSelectTitle(swipeSelectA);
     updateSwipeSelectTitle(swipeSelectB);
+    swipeRefOrthoSelect.innerHTML = orthoOpts.join("");
   }
 
   // O texto do <select> fica truncado com reticencias quando mais largo que
@@ -1142,6 +1149,7 @@
     renderChartPanel(); // esconde o grafico -- nao faz sentido durante a comparacao
     updateLegendPanelVisibility(); // esconde a legenda geral -- cada lado tem a sua propria
     hideNormalMapLayers(); // ver funcao: sem isso, classe desmarcada num lado do swipe deixava a camada normal aparecer por baixo
+    applySwipeRefOrtho(); // ortofoto de fundo escolhida (opcional) -- sem isso, comparar duas vegetacoes fica sem nenhuma foto por baixo
 
     buildSwipeLayers(a, "swipePaneA", "a").then(function (items) {
       swipeLayers.a = items;
@@ -1184,6 +1192,7 @@
     renderChartPanel(); // volta a mostrar o grafico do estado normal do mapa
     updateLegendPanelVisibility(); // volta a mostrar a legenda geral
     restoreNormalMapLayers();
+    applySwipeRefOrtho(); // swipeActive ja' esta false aqui -- so' remove a ortofoto de fundo
   }
 
   // O swipe so' recorta/mostra as camadas dos proprios panes (swipePaneA/B).
@@ -1265,6 +1274,27 @@
       '<div class="swipe-legend-title">Índice de crescimento — ' + fmtDate(older.date) + " → " + fmtDate(newer.date) + "</div>" +
       rowsHtml;
   }
+
+  // Ortofoto de fundo opcional, comum aos dois lados do swipe (nao e'
+  // recortada pelo divisor -- fica no pane padrao, embaixo dos panes do
+  // swipe). Sem isso, comparar duas camadas de vegetacao ficava sem
+  // nenhuma foto por baixo, so' os poligonos coloridos. Chamada de novo
+  // (com swipeActive=false) tambem serve pra so' remover a camada atual,
+  // reaproveitada em deactivateSwipe.
+  function applySwipeRefOrtho() {
+    if (swipeRefOrthoLayer) { map.removeLayer(swipeRefOrthoLayer); swipeRefOrthoLayer = null; }
+    if (!swipeActive) { return; }
+    var val = swipeRefOrthoSelect.value;
+    if (!val) { return; }
+    var parts = val.split("|");
+    var fl = findFlight(parts[0], parts[1], parts[2] || null);
+    if (!fl || !fl.hasOrtho) { return; }
+    swipeRefOrthoLayer = L.tileLayer("../data/" + fl.tiles + "/{z}/{x}/{y}." + fl.tileExt, {
+      maxZoom: 22, maxNativeZoom: fl.maxNativeZoom, minNativeZoom: fl.minNativeZoom,
+      bounds: fl.bounds, updateWhenZooming: false, updateWhenIdle: true
+    }).addTo(map);
+  }
+  swipeRefOrthoSelect.addEventListener("change", applySwipeRefOrtho);
 
   function onMapMoveDuringSwipe() { setSwipePosition(swipeCurrentPct); }
 
