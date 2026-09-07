@@ -1,0 +1,48 @@
+{
+  "project": "solar-lavras",
+  "projectName": "SOLAR LAVRAS",
+  "date": "2026-08-26",
+  "block": "PCS09",
+  "status": "visible",
+  "bounds": [
+    [
+      -3.80095693409,
+      -38.931306
+    ],
+    [
+      -3.796731,
+      -38.92848722332
+    ]
+  ],
+  "hasOrtho": true,
+  "hasVegetation": true,
+  "tileExt": "webp",
+  "minNativeZoom": 15,
+  "maxNativeZoom": 21,
+  "classes": [
+    {
+      "id": 1,
+      "name": "Solo",
+      "count": 158,
+      "areaM2": 90046.13
+    },
+    {
+      "id": 2,
+      "name": "Vegetacao Baixa (Roco)",
+      "count": 1160,
+      "areaM2": 9615.65
+    },
+    {
+      "id": 3,
+      "name": "Vegetacao Alta",
+      "count": 26,
+      "areaM2": 91.51
+    },
+    {
+      "id": 4,
+      "name": "Painel/Estrutura",
+      "count": 200,
+      "areaM2": 29631.96
+    }
+  ]
+}

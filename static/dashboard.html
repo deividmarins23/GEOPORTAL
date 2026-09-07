@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEOPORTAL SE-T3 — Dashboard</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="topbar">
+  <img id="brandLogo1" class="brand-logo" hidden alt="Logo">
+  <div class="brand">
+    <span class="brand-title" id="brandTitle">GEOPORTAL SE-T3</span>
+    <span class="brand-sub">Dashboard — Status de vegetação da frota</span>
+  </div>
+  <div class="topbar-actions">
+    <img id="brandLogo2" class="brand-logo" hidden alt="Logo">
+    <a href="index.html" class="icon-btn" title="Voltar ao mapa">&#128506;</a>
+  </div>
+</header>
+
+<div id="dashboardApp">
+
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi-card">
+      <div class="kpi-label">Projetos/blocos monitorados</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Área total monitorada</div>
+      <div class="kpi-value" id="kpiArea">—</div>
+    </div>
+    <div class="kpi-card kpi-card-acao">
+      <div class="kpi-label">🔴 Ação necessária</div>
+      <div class="kpi-value" id="kpiAcao">—</div>
+    </div>
+    <div class="kpi-card kpi-card-atencao">
+      <div class="kpi-label">🟡 Atenção</div>
+      <div class="kpi-value" id="kpiAtencao">—</div>
+    </div>
+    <div class="kpi-card kpi-card-ok">
+      <div class="kpi-label">🟢 OK</div>
+      <div class="kpi-value" id="kpiOk">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Atualizado em</div>
+      <div class="kpi-value kpi-value-small" id="kpiUpdated">—</div>
+    </div>
+  </div>
+
+  <div class="dash-panel">
+    <div class="dash-panel-head">
+      <h3>Status por projeto/bloco</h3>
+      <div class="dash-controls">
+        <input type="text" id="dashSearch" placeholder="Buscar projeto ou bloco...">
+        <select id="dashStatusFilter">
+          <option value="all">Todos os status</option>
+          <option value="acao">🔴 Ação necessária</option>
+          <option value="atencao">🟡 Atenção</option>
+          <option value="ok">🟢 OK</option>
+        </select>
+      </div>
+    </div>
+    <div class="dash-table-wrap">
+      <table class="dash-table" id="dashTable">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Projeto</th>
+            <th>Bloco</th>
+            <th>Última atualização</th>
+            <th>Cobertura</th>
+            <th>Tendência</th>
+            <th>Área monitorada</th>
+          </tr>
+        </thead>
+        <tbody id="dashTableBody"></tbody>
+      </table>
+    </div>
+    <div class="dash-empty" id="dashEmpty" hidden>Nenhum item corresponde ao filtro.</div>
+  </div>
+
+</div>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>
