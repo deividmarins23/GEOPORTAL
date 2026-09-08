@@ -464,6 +464,24 @@ a.icon-btn { text-decoration: none; }
   cursor: pointer;
 }
 
+.heatmap-palette-select {
+  margin-top: 6px;
+  width: 100%;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+}
+
+/* Suaviza as bordas retas das celulas da grade -- fica com uma leitura mais
+   parecida com um "mapa de calor" continuo em vez de quadriculado, sem o
+   custo/complexidade de gerar curvas de nivel (isobandas) reais. */
+.leaflet-heatmap-pane {
+  filter: blur(2.5px);
+}
+
 .heatmap-legend {
   position: absolute;
   left: 50%;

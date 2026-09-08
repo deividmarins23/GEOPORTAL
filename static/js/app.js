@@ -1301,7 +1301,9 @@
     if (!heatmapAvailable) { disableGrowthHeatmap(); }
     var heatmapRowHtml = heatmapAvailable
       ? '<label class="growth-heatmap-toggle"><input type="checkbox" id="growthHeatmapToggle"' +
-          (growthHeatmapActive ? " checked" : "") + '> 🔥 ' + I18N.t("mostrar_heatmap") + "</label>"
+          (growthHeatmapActive ? " checked" : "") + '> 🔥 ' + I18N.t("mostrar_heatmap") + "</label>" +
+          '<select id="heatmapPaletteSelect" class="heatmap-palette-select"' +
+            (growthHeatmapActive ? "" : ' hidden') + '>' + heatmapPaletteOptionsHtml() + "</select>"
       : "";
 
     container.hidden = false;
@@ -1311,8 +1313,13 @@
   }
 
   document.getElementById("swipeGrowthIndex").addEventListener("change", function (e) {
-    if (e.target.id !== "growthHeatmapToggle") { return; }
-    if (e.target.checked) { enableGrowthHeatmap(); } else { disableGrowthHeatmap(); }
+    if (e.target.id === "growthHeatmapToggle") {
+      if (e.target.checked) { enableGrowthHeatmap(); } else { disableGrowthHeatmap(); }
+    } else if (e.target.id === "heatmapPaletteSelect") {
+      heatmapPaletteKey = e.target.value;
+      try { localStorage.setItem(HEATMAP_PALETTE_KEY, heatmapPaletteKey); } catch (err) { /* ignora navegador sem localStorage */ }
+      restyleGrowthHeatmap();
+    }
   });
 
   // Mesma classificacao de severidade usada no dashboard (dashboard.js) --
@@ -1351,6 +1358,11 @@
     });
   }
 
+  function setHeatmapPaletteSelectVisible(visible) {
+    var sel = document.getElementById("heatmapPaletteSelect");
+    if (sel) { sel.hidden = !visible; }
+  }
+
   function enableGrowthHeatmap() {
     if (!swipeSelectA.value || !swipeSelectB.value) { return; }
     var a = flightFromSelectValue(swipeSelectA.value);
@@ -1358,6 +1370,7 @@
     if (!a.meta.growthGrid || !b.meta.growthGrid) { return; }
 
     growthHeatmapActive = true;
+    setHeatmapPaletteSelectVisible(true);
     (swipeLayers.a || []).forEach(function (it) { map.removeLayer(it.layer); });
     (swipeLayers.b || []).forEach(function (it) { map.removeLayer(it.layer); });
     setSwipeDividerVisible(false);
@@ -1376,6 +1389,7 @@
 
   function disableGrowthHeatmap() {
     growthHeatmapActive = false;
+    setHeatmapPaletteSelectVisible(false);
     if (heatmapLayer) { map.removeLayer(heatmapLayer); heatmapLayer = null; }
     if (swipeDom.heatmapLegend && swipeDom.heatmapLegend.parentNode) {
       swipeDom.heatmapLegend.parentNode.removeChild(swipeDom.heatmapLegend);
@@ -1388,20 +1402,51 @@
     }
   }
 
-  // Cor (vermelho = cresceu, verde = reduziu -- mesma semantica ja usada no
-  // indice de crescimento/dashboard) E opacidade escalam com a magnitude da
-  // mudanca: celula sem mudanca fica quase invisivel (deixa a ortofoto de
-  // fundo aparecer), so' os pontos de maior diferenca ficam bem visiveis --
-  // sem isso, uma tinta uniforme cobrindo o talhao inteiro escondia onde a
-  // mudanca de verdade estava concentrada.
+  // 4 paletas divergentes pre-definidas (celula sem mudanca = branco, pontas
+  // = a cor cheia do lado negativo/positivo) -- usuario escolhe a que
+  // preferir; guardada em localStorage pra persistir entre sessoes.
+  var HEATMAP_PALETTE_KEY = "geoportal_heatmap_palette";
+  var HEATMAP_PALETTES = {
+    red_green: { pt: "Vermelho / Verde", en: "Red / Green", neg: [46, 204, 113], pos: [231, 76, 60] },
+    blue_orange: { pt: "Azul / Laranja", en: "Blue / Orange", neg: [52, 152, 219], pos: [230, 126, 34] },
+    purple_gold: { pt: "Roxo / Dourado", en: "Purple / Gold", neg: [142, 68, 173], pos: [241, 196, 15] },
+    grayscale: { pt: "Escala de cinza", en: "Grayscale", neg: [149, 165, 166], pos: [44, 62, 80] }
+  };
+  var heatmapPaletteKey = "red_green";
+  try {
+    var storedPalette = localStorage.getItem(HEATMAP_PALETTE_KEY);
+    if (storedPalette && HEATMAP_PALETTES[storedPalette]) { heatmapPaletteKey = storedPalette; }
+  } catch (e) { /* ignora navegador sem localStorage */ }
+
+  function heatmapPaletteOptionsHtml() {
+    var lang = I18N.getLang();
+    return Object.keys(HEATMAP_PALETTES).map(function (key) {
+      var pal = HEATMAP_PALETTES[key];
+      var label = lang === "en" ? pal.en : pal.pt;
+      return '<option value="' + key + '"' + (key === heatmapPaletteKey ? " selected" : "") + ">" + label + "</option>";
+    }).join("");
+  }
+
+  // Cor e opacidade escalam com a magnitude da mudanca: celula sem mudanca
+  // fica quase invisivel (deixa a ortofoto de fundo aparecer), so' os pontos
+  // de maior diferenca ficam bem visiveis -- sem isso, uma tinta uniforme
+  // cobrindo o talhao inteiro escondia onde a mudanca de verdade estava
+  // concentrada. Cor interpola de branco (sem mudanca) até a cor cheia da
+  // paleta escolhida (negativo = reduziu, positivo = cresceu).
   function heatmapCellStyle(delta, maxAbs) {
     if (maxAbs <= 0) { return { stroke: false, fillOpacity: 0 }; }
     var t = Math.max(-1, Math.min(1, delta / maxAbs));
     var intensity = Math.abs(t);
-    var channel = Math.round(255 * (1 - intensity));
-    var color = t >= 0 ? "rgb(255," + channel + "," + channel + ")" : "rgb(" + channel + ",255," + channel + ")";
+    var pal = HEATMAP_PALETTES[heatmapPaletteKey] || HEATMAP_PALETTES.red_green;
+    var base = t >= 0 ? pal.pos : pal.neg;
+    var mix = function (c) { return Math.round(255 + (c - 255) * intensity); };
+    var color = "rgb(" + mix(base[0]) + "," + mix(base[1]) + "," + mix(base[2]) + ")";
     return { stroke: false, fillColor: color, fillOpacity: 0.12 + intensity * 0.58 };
   }
+
+  // Guardados pra poder reestilizar so' com CSS/estilo (sem refazer fetch +
+  // recalcular deltas) quando o usuario so' troca a paleta de cor.
+  var lastHeatmapMaxAbs = 0;
 
   function renderGrowthHeatmapLayer(gridOld, gridNew) {
     if (heatmapLayer) { map.removeLayer(heatmapLayer); heatmapLayer = null; }
@@ -1422,6 +1467,7 @@
       return { geometry: (fNew || fOld).geometry, delta: concernNew - concernOld };
     });
     var maxAbs = cellDeltas.reduce(function (m, c) { return Math.max(m, Math.abs(c.delta)); }, 0);
+    lastHeatmapMaxAbs = maxAbs;
 
     var features = cellDeltas.map(function (c) {
       return { type: "Feature", properties: { delta: c.delta }, geometry: c.geometry };
@@ -1441,15 +1487,29 @@
     renderHeatmapLegend();
   }
 
+  // Reaplica so' o estilo (cor/opacidade) do heatmap ja carregado -- usado
+  // quando o usuario troca de paleta, sem precisar refazer o fetch dos
+  // growth_grid.json nem recalcular os deltas por celula.
+  function restyleGrowthHeatmap() {
+    if (!heatmapLayer) { return; }
+    heatmapLayer.setStyle(function (feature) {
+      return heatmapCellStyle(feature.properties.delta, lastHeatmapMaxAbs);
+    });
+    renderHeatmapLegend();
+  }
+
   function renderHeatmapLegend() {
     if (swipeDom.heatmapLegend && swipeDom.heatmapLegend.parentNode) {
       swipeDom.heatmapLegend.parentNode.removeChild(swipeDom.heatmapLegend);
     }
+    var pal = HEATMAP_PALETTES[heatmapPaletteKey] || HEATMAP_PALETTES.red_green;
+    var negRgb = "rgb(" + pal.neg.join(",") + ")";
+    var posRgb = "rgb(" + pal.pos.join(",") + ")";
     var el = document.createElement("div");
     el.className = "heatmap-legend";
     el.innerHTML =
       '<span>' + I18N.t("heatmap_reduziu") + '</span>' +
-      '<div class="heatmap-legend-bar"></div>' +
+      '<div class="heatmap-legend-bar" style="background: linear-gradient(90deg, ' + negRgb + ', #ffffff, ' + posRgb + ')"></div>' +
       '<span>' + I18N.t("heatmap_cresceu") + '</span>';
     document.getElementById("mapWrap").appendChild(el);
     swipeDom.heatmapLegend = el;

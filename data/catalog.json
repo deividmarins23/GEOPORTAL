@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08 11:30",
+  "generatedAt": "2026-09-08 14:24",
   "projects": [
     {
       "id": "solar-lavras",
@@ -50,8 +50,27 @@
               "count": 200,
               "areaM2": 29631.96
             }
+          ]
+        },
+        {
+          "date": "2026-08-26",
+          "block": "PCS01",
+          "bounds": [
+            [
+              -3.797517573633,
+              -38.933495637915
+            ],
+            [
+              -3.7919545876379996,
+              -38.929505614683
+            ]
           ],
-          "growthGrid": "solar-lavras/2026-08-26--pcs09/growth_grid.json"
+          "hasOrtho": true,
+          "hasVegetation": false,
+          "tiles": "solar-lavras/2026-08-26--pcs01/tiles",
+          "tileExt": "webp",
+          "minNativeZoom": 15,
+          "maxNativeZoom": 21
         },
         {
           "date": "2026-08-03",
@@ -98,8 +117,7 @@
               "count": 141,
               "areaM2": 44843.02
             }
-          ],
-          "growthGrid": "solar-lavras/2026-08-03--pcs09/growth_grid.json"
+          ]
         }
       ]
     }
