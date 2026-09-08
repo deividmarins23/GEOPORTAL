@@ -66,6 +66,7 @@ html, body {
 }
 .icon-btn:hover { background: rgba(255,255,255,0.22); }
 a.icon-btn { text-decoration: none; }
+.lang-btn { font-size: 12px; font-weight: 700; }
 
 #app {
   display: flex;

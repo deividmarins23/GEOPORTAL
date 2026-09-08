@@ -10,7 +10,7 @@
 <body>
 
 <header id="topbar">
-  <button id="sidebarToggle" class="icon-btn" title="Mostrar/ocultar painel">&#9776;</button>
+  <button id="sidebarToggle" class="icon-btn" data-i18n-title="sidebar_toggle" title="Mostrar/ocultar painel">&#9776;</button>
   <img id="brandLogo1" class="brand-logo" hidden alt="Logo">
   <div class="brand">
     <span class="brand-title" id="brandTitle">GEOPORTAL SE-T3</span>
@@ -18,9 +18,10 @@
   </div>
   <div class="topbar-actions">
     <img id="brandLogo2" class="brand-logo" hidden alt="Logo">
-    <a href="dashboard.html" class="icon-btn" title="Dashboard">&#128202;</a>
-    <button id="btnHome" class="icon-btn" title="Zoom para a área">&#8962;</button>
-    <button id="btnFullscreen" class="icon-btn" title="Tela cheia">&#9974;</button>
+    <button id="langToggle" class="icon-btn lang-btn" title="Language / Idioma">EN</button>
+    <a href="dashboard.html" class="icon-btn" data-i18n-title="dashboard_link" title="Dashboard">&#128202;</a>
+    <button id="btnHome" class="icon-btn" data-i18n-title="home_title" title="Zoom para a área">&#8962;</button>
+    <button id="btnFullscreen" class="icon-btn" data-i18n-title="fullscreen_title" title="Tela cheia">&#9974;</button>
   </div>
 </header>
 
@@ -28,76 +29,76 @@
   <aside id="sidebar">
 
     <section class="panel">
-      <h3>Mapa Base</h3>
-      <div class="radio-row"><label><input type="radio" name="basemap" value="esri" checked> Satélite (Esri)</label></div>
-      <div class="radio-row"><label><input type="radio" name="basemap" value="osm"> OpenStreetMap</label></div>
-      <div class="radio-row"><label><input type="radio" name="basemap" value="none"> Nenhum (fundo escuro)</label></div>
+      <h3 data-i18n="mapa_base_h">Mapa Base</h3>
+      <div class="radio-row"><label><input type="radio" name="basemap" value="esri" checked> <span data-i18n="satelite">Satélite (Esri)</span></label></div>
+      <div class="radio-row"><label><input type="radio" name="basemap" value="osm"> <span data-i18n="osm">OpenStreetMap</span></label></div>
+      <div class="radio-row"><label><input type="radio" name="basemap" value="none"> <span data-i18n="nenhum_fundo">Nenhum (fundo escuro)</span></label></div>
     </section>
 
     <section class="panel">
-      <h3>Medição</h3>
+      <h3 data-i18n="medicao_h">Medição</h3>
       <div class="measure-row">
-        <button type="button" id="btnMeasureLine" class="measure-btn" title="Medir distância">📏 Linha</button>
-        <button type="button" id="btnMeasureArea" class="measure-btn" title="Medir área">▱ Área</button>
-        <button type="button" id="btnMeasureClear" class="measure-btn measure-btn-clear" title="Limpar medições">Limpar</button>
+        <button type="button" id="btnMeasureLine" class="measure-btn" data-i18n-title="medir_linha_title" title="Medir distância"><span data-i18n="linha_btn">📏 Linha</span></button>
+        <button type="button" id="btnMeasureArea" class="measure-btn" data-i18n-title="medir_area_title" title="Medir área"><span data-i18n="area_btn">▱ Área</span></button>
+        <button type="button" id="btnMeasureClear" class="measure-btn measure-btn-clear" data-i18n-title="limpar_title" title="Limpar medições"><span data-i18n="limpar_btn">Limpar</span></button>
       </div>
-      <div class="panel-footer">Clique no mapa para adicionar pontos, duplo-clique para terminar. Apenas visual, nada é salvo.</div>
+      <div class="panel-footer" data-i18n="medicao_footer">Clique no mapa para adicionar pontos, duplo-clique para terminar. Apenas visual, nada é salvo.</div>
     </section>
 
     <section class="panel">
-      <h3>Projeto</h3>
+      <h3 data-i18n="projeto_h">Projeto</h3>
       <select id="projectSelect" class="project-select"></select>
       <div id="projectPanelBody"></div>
-      <div class="panel-footer" id="catalogStatus">Carregando catálogo...</div>
+      <div class="panel-footer" id="catalogStatus" data-i18n="carregando_catalogo">Carregando catálogo...</div>
     </section>
 
     <section class="panel" id="legendPanel" hidden>
       <div class="panel-header-row">
-        <h3>Legenda de Vegetação</h3>
-        <button id="btnResetColors" class="link-btn">restaurar cores</button>
+        <h3 data-i18n="legenda_veg_h">Legenda de Vegetação</h3>
+        <button id="btnResetColors" class="link-btn" data-i18n="restaurar_cores">restaurar cores</button>
       </div>
       <label class="select-all-row legend-select-all">
-        <input type="checkbox" id="legendSelectAll" checked> Marcar/desmarcar tudo
+        <input type="checkbox" id="legendSelectAll" checked> <span data-i18n="marcar_desmarcar_tudo">Marcar/desmarcar tudo</span>
       </label>
       <div id="legendList"></div>
     </section>
 
     <section class="panel" id="chartPanel" hidden>
       <div class="panel-header-row">
-        <h3>Cobertura (%)</h3>
+        <h3 data-i18n="cobertura_h">Cobertura (%)</h3>
         <select id="chartTypeSelect" class="chart-type-select">
-          <option value="donut">Gráfico de rosca</option>
-          <option value="pie">Gráfico de pizza</option>
-          <option value="bar">Gráfico de barras</option>
+          <option value="donut" data-i18n="grafico_rosca">Gráfico de rosca</option>
+          <option value="pie" data-i18n="grafico_pizza">Gráfico de pizza</option>
+          <option value="bar" data-i18n="grafico_barras">Gráfico de barras</option>
         </select>
       </div>
       <div id="chartList"></div>
     </section>
 
     <section class="panel" id="swipePanel" hidden>
-      <h3>Comparar Camadas (Swipe)</h3>
+      <h3 data-i18n="comparar_camadas_h">Comparar Camadas (Swipe)</h3>
       <div class="swipe-row">
-        <label for="swipeA">Camada A</label>
+        <label for="swipeA" data-i18n="camada_a">Camada A</label>
         <select id="swipeA"></select>
       </div>
       <div class="swipe-row">
-        <label for="swipeB">Camada B</label>
+        <label for="swipeB" data-i18n="camada_b">Camada B</label>
         <select id="swipeB"></select>
       </div>
       <div class="swipe-row">
-        <label for="swipeRefOrtho">Ortofoto de fundo</label>
+        <label for="swipeRefOrtho" data-i18n="ortofoto_fundo">Ortofoto de fundo</label>
         <select id="swipeRefOrtho"></select>
       </div>
-      <button id="btnSwipeToggle" class="btn-primary">Ativar comparação</button>
+      <button id="btnSwipeToggle" class="btn-primary" data-i18n="ativar_comparacao">Ativar comparação</button>
       <div id="swipeGrowthIndex" class="swipe-growth" hidden></div>
       <div id="swipeLegendA" class="swipe-legend" hidden></div>
       <div id="swipeLegendB" class="swipe-legend" hidden></div>
     </section>
 
     <section class="panel panel-meta">
-      <div><strong>CRS de origem:</strong> EPSG:32724 (UTM 24S)</div>
-      <div><strong>Publicado em:</strong> EPSG:4326 / EPSG:3857</div>
-      <div><strong>Dados atualizados em:</strong> <span id="dataUpdatedAt">—</span></div>
+      <div><strong data-i18n="crs_origem">CRS de origem:</strong> EPSG:32724 (UTM 24S)</div>
+      <div><strong data-i18n="publicado_em">Publicado em:</strong> EPSG:4326 / EPSG:3857</div>
+      <div><strong data-i18n="dados_atualizados">Dados atualizados em:</strong> <span id="dataUpdatedAt">—</span></div>
     </section>
 
   </aside>
@@ -109,6 +110,7 @@
 </div>
 
 <script src="vendor/leaflet/leaflet.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

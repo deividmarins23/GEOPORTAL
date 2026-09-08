@@ -210,14 +210,14 @@
       if (updatedEl) { updatedEl.textContent = catalog.generatedAt || "—"; }
       var cat = catalog.projects || [];
       if (cat.length === 0) {
-        catalogStatus.textContent = "Nenhum projeto no catálogo.";
+        catalogStatus.textContent = I18N.t("nenhum_projeto");
         return;
       }
       cat.forEach(function (p) { registerProject(p); });
       buildLegendFromCatalog(cat);
       populateProjectSelect();
       populateSwipeSelects();
-      catalogStatus.textContent = cat.length + " projeto(s) carregado(s).";
+      catalogStatus.textContent = cat.length + I18N.t("projetos_carregados");
       if (allBounds) { map.fitBounds(allBounds); }
 
       // ativa automaticamente o primeiro item do primeiro projeto, pra a
@@ -242,7 +242,7 @@
       }
     })
     .catch(function (err) {
-      catalogStatus.textContent = "Falha ao carregar catálogo: " + err.message;
+      catalogStatus.textContent = I18N.t("falha_catalogo") + err.message;
       catalogStatus.style.color = "#c0392b";
       console.error(err);
     });
@@ -341,7 +341,7 @@
   // data-swipe-side/data-swipe-cid, dependendo de quem chama).
   function buildColorControlHtml(color, attrsKey) {
     return (
-      '<button type="button" class="color-btn" style="background:' + color + '" data-role="legend-color-toggle" ' + attrsKey + ' title="Cor"></button>' +
+      '<button type="button" class="color-btn" style="background:' + color + '" data-role="legend-color-toggle" ' + attrsKey + ' title="' + I18N.t("cor_title") + '"></button>' +
       '<div class="color-popover" ' + attrsKey + ' hidden>' +
         buildQuickColorsHtml('data-role="legend-quickcolor" ' + attrsKey) +
         '<input type="color" class="color-swatch-full" value="' + color + '" data-role="legend-color" ' + attrsKey + '>' +
@@ -354,15 +354,15 @@
     return (
       '<div class="layer-card">' +
         '<div class="layer-card-head">' +
-          '<input type="checkbox" checked data-role="legend-visible" data-key="' + lk + '" title="Mostrar no mapa">' +
+          '<input type="checkbox" checked data-role="legend-visible" data-key="' + lk + '" title="' + I18N.t("mostrar_no_mapa") + '">' +
           '<span class="layer-name">' + escapeHtml(st.name) + '</span>' +
-          '<label class="chart-toggle" title="Incluir no gráfico de cobertura">' +
+          '<label class="chart-toggle" title="' + I18N.t("incluir_grafico") + '">' +
             '<input type="checkbox" ' + (st.chart ? "checked" : "") + ' data-role="legend-chart" data-key="' + lk + '">📊' +
           '</label>' +
           buildColorControlHtml(st.color, 'data-key="' + lk + '"') +
         '</div>' +
         '<div class="layer-card-body">' +
-          '<span>opacidade</span>' +
+          '<span>' + I18N.t("opacidade") + '</span>' +
           '<input type="range" min="0" max="100" value="' + st.opacity + '" data-role="legend-opacity" data-key="' + lk + '">' +
           '<span class="layer-opacity-val" data-role="legend-opacity-val" data-key="' + lk + '">' + st.opacity + '%</span>' +
         '</div>' +
@@ -522,7 +522,7 @@
   }
 
   function buildDonutHtml(data, isPie) {
-    if (data.total <= 0) { return '<div class="chart-empty">sem dados visiveis</div>'; }
+    if (data.total <= 0) { return '<div class="chart-empty">' + I18N.t("sem_dados_visiveis") + '</div>'; }
     var acc = 0;
     var stops = data.rows.map(function (r) {
       var pct = r.areaM2 / data.total * 100;
@@ -535,7 +535,7 @@
   }
 
   function buildBarHtml(data) {
-    if (data.total <= 0) { return '<div class="chart-empty">sem dados visiveis</div>'; }
+    if (data.total <= 0) { return '<div class="chart-empty">' + I18N.t("sem_dados_visiveis") + '</div>'; }
     var segs = data.rows.map(function (r) {
       var pct = r.areaM2 / data.total * 100;
       return '<div class="chart-bar-seg" style="width:' + pct.toFixed(2) + '%; background:' + r.color + '" title="' +
@@ -739,11 +739,11 @@
 
       var orthoBtn = fl.hasOrtho
         ? '<button type="button" class="mini-toggle mini-toggle-ortho' + (orthoOn ? " active" : "") + '" ' +
-            'data-block="' + escapeHtml(block) + '" data-kind="ortho" title="Ortofoto">Foto</button>'
+            'data-block="' + escapeHtml(block) + '" data-kind="ortho" title="' + I18N.t("ortofoto_label") + '">' + I18N.t("foto_btn") + '</button>'
         : "";
       var vegBtn = fl.hasVegetation
         ? '<button type="button" class="mini-toggle mini-toggle-veg' + (vegOn ? " active" : "") + '" ' +
-            'data-block="' + escapeHtml(block) + '" data-kind="veg" title="Vegetação">Veg</button>'
+            'data-block="' + escapeHtml(block) + '" data-kind="veg" title="' + I18N.t("vegetacao_label") + '">' + I18N.t("veg_btn") + '</button>'
         : "";
 
       return (
@@ -758,8 +758,8 @@
     projectPanelBody.innerHTML =
       '<div class="blocks-head">' +
         '<label class="select-all-row"><input type="checkbox" id="blocksSelectAll" ' +
-          (countActiveBlocks(proj) === proj.blocks.length ? "checked" : "") + '> Selecionar todos</label>' +
-        '<span class="blocks-count" id="blocksCount">' + countActiveBlocks(proj) + " selecionado(s)</span>" +
+          (countActiveBlocks(proj) === proj.blocks.length ? "checked" : "") + '> ' + I18N.t("selecionar_todos") + '</label>' +
+        '<span class="blocks-count" id="blocksCount">' + countActiveBlocks(proj) + I18N.t("selecionado_s") + "</span>" +
       "</div>" +
       '<div class="blocks-grid" id="blocksGrid">' + rows + "</div>";
 
@@ -780,7 +780,7 @@
         setVegActive(proj.id, fl, key, !activeVeg[key]);
       }
       btn.classList.toggle("active");
-      document.getElementById("blocksCount").textContent = countActiveBlocks(proj) + " selecionado(s)";
+      document.getElementById("blocksCount").textContent = countActiveBlocks(proj) + I18N.t("selecionado_s");
       document.getElementById("blocksSelectAll").checked = countActiveBlocks(proj) === proj.blocks.length;
     });
 
@@ -842,10 +842,10 @@
     }).join("");
 
     var orthoRow = fl.hasOrtho
-      ? '<label><input type="checkbox" id="simpleOrtho" ' + (orthoOn ? "checked" : "") + "> Ortofoto</label>"
+      ? '<label><input type="checkbox" id="simpleOrtho" ' + (orthoOn ? "checked" : "") + "> " + I18N.t("ortofoto_label") + "</label>"
       : "";
     var vegRow = fl.hasVegetation
-      ? '<label><input type="checkbox" id="simpleVeg" ' + (vegOn ? "checked" : "") + "> Vegetação</label>"
+      ? '<label><input type="checkbox" id="simpleVeg" ' + (vegOn ? "checked" : "") + "> " + I18N.t("vegetacao_label") + "</label>"
       : "";
 
     projectPanelBody.innerHTML =
@@ -906,16 +906,16 @@
 
   function populateSwipeSelects() {
     var opts = [];
-    var orthoOpts = ['<option value="">Nenhuma</option>'];
+    var orthoOpts = ['<option value="">' + I18N.t("nenhuma") + '</option>'];
     projectOrder.forEach(function (pid) {
       projects[pid].flights.forEach(function (fl) {
         var base = pid + "|" + fl.date + "|" + (fl.block || "");
         var label = projects[pid].name + (fl.block ? " / " + fl.block : "") + " — " + fmtDate(fl.date);
         if (fl.hasOrtho) {
-          opts.push('<option value="' + base + '|ortho">' + escapeHtml(label) + " (Ortofoto)</option>");
+          opts.push('<option value="' + base + '|ortho">' + escapeHtml(label) + I18N.t("sufixo_ortofoto") + "</option>");
           orthoOpts.push('<option value="' + base + '">' + escapeHtml(label) + "</option>");
         }
-        if (fl.hasVegetation) { opts.push('<option value="' + base + '|veg">' + escapeHtml(label) + " (Vegetação)</option>"); }
+        if (fl.hasVegetation) { opts.push('<option value="' + base + '|veg">' + escapeHtml(label) + I18N.t("sufixo_vegetacao") + "</option>"); }
       });
     });
     swipeSelectA.innerHTML = opts.join("");
@@ -945,7 +945,7 @@
 
   function swipeSideLabel(info) {
     return info.name + (info.block ? " / " + info.block : "") + " — " + fmtDate(info.date) +
-      (info.type === "veg" ? " (Vegetação)" : " (Ortofoto)");
+      (info.type === "veg" ? I18N.t("sufixo_vegetacao") : I18N.t("sufixo_ortofoto"));
   }
 
   function swipeStyleForClass(side, cid) {
@@ -1018,7 +1018,7 @@
       return;
     }
     container.hidden = false;
-    var title = (info.block ? escapeHtml(info.block) + " · " : "") + "Vegetação " + fmtDate(info.date);
+    var title = (info.block ? escapeHtml(info.block) + " · " : "") + I18N.t("legenda_lado") + fmtDate(info.date);
     container.innerHTML =
       '<div class="swipe-legend-title"><span class="swipe-legend-badge">' + side.toUpperCase() + "</span><span>" + title + "</span></div>" +
       cids.map(function (cid) { return buildSwipeLegendRowHtml(side, cid); }).join("");
@@ -1035,7 +1035,7 @@
           buildColorControlHtml(st.color, attrsKey) +
         "</div>" +
         '<div class="layer-card-body">' +
-          "<span>opacidade</span>" +
+          "<span>" + I18N.t("opacidade") + "</span>" +
           '<input type="range" min="0" max="100" value="' + st.opacity + '" data-role="legend-opacity" ' + attrsKey + '>' +
           '<span class="layer-opacity-val" data-role="legend-opacity-val" ' + attrsKey + '>' + st.opacity + "%</span>" +
         "</div>" +
@@ -1116,7 +1116,7 @@
     renderGrowthIndex(a, b);
 
     sizeSwipePanes();
-    map.on("move zoom", onMapMoveDuringSwipe);
+    map.on("move zoom zoomend moveend", onMapMoveDuringSwipe);
 
     var mapWrap = document.getElementById("mapWrap");
     swipeDom.divider = document.createElement("div");
@@ -1144,7 +1144,7 @@
     swipeDom.handle.addEventListener("touchstart", onSwipeDragStart, { passive: true });
 
     swipeActive = true;
-    btnSwipeToggle.textContent = "Desativar comparação";
+    btnSwipeToggle.textContent = I18N.t("desativar_comparacao");
     btnSwipeToggle.classList.add("active");
     renderChartPanel(); // esconde o grafico -- nao faz sentido durante a comparacao
     updateLegendPanelVisibility(); // esconde a legenda geral -- cada lado tem a sua propria
@@ -1168,7 +1168,7 @@
   }
 
   function deactivateSwipe() {
-    map.off("move zoom", onMapMoveDuringSwipe);
+    map.off("move zoom zoomend moveend", onMapMoveDuringSwipe);
     (swipeLayers.a || []).forEach(function (it) { map.removeLayer(it.layer); });
     (swipeLayers.b || []).forEach(function (it) { map.removeLayer(it.layer); });
     swipeLayers.a = null;
@@ -1187,7 +1187,7 @@
     });
     swipeActive = false;
     swipeCurrentPct = 50;
-    btnSwipeToggle.textContent = "Ativar comparação";
+    btnSwipeToggle.textContent = I18N.t("ativar_comparacao");
     btnSwipeToggle.classList.remove("active");
     renderChartPanel(); // volta a mostrar o grafico do estado normal do mapa
     updateLegendPanelVisibility(); // volta a mostrar a legenda geral
@@ -1253,6 +1253,18 @@
       if (names.indexOf(n) === -1 && defaultChartIncluded(n)) { names.push(n); }
     });
 
+    // Uma unidade so' (m² ou ha) pra TODAS as linhas do painel -- decidida
+    // pelo maior valor entre todas, senao uma linha em ha ao lado de outra
+    // em m² fica dificil de comparar de relance.
+    var maxArea = 0;
+    names.forEach(function (name) {
+      maxArea = Math.max(maxArea, olderByName[name] || 0, newerByName[name] || 0);
+    });
+    var useHa = maxArea >= 10000;
+    function fmtGrowthArea(v) {
+      return useHa ? (v / 10000).toFixed(2) + " ha" : v.toFixed(0) + " m²";
+    }
+
     var rowsHtml = names.map(function (name) {
       var areaOld = olderByName[name] || 0;
       var areaNew = newerByName[name] || 0;
@@ -1263,7 +1275,7 @@
       return (
         '<div class="growth-row">' +
           '<span class="growth-name">' + escapeHtml(name) + "</span>" +
-          '<span class="growth-areas">' + fmtArea(areaOld) + " → " + fmtArea(areaNew) + "</span>" +
+          '<span class="growth-areas">' + fmtGrowthArea(areaOld) + " → " + fmtGrowthArea(areaNew) + "</span>" +
           '<span class="dash-trend ' + trendClass + '">' + arrow + " " + (deltaPct >= 0 ? "+" : "") + deltaPct.toFixed(1) + "%</span>" +
         "</div>"
       );
@@ -1271,7 +1283,7 @@
 
     container.hidden = false;
     container.innerHTML =
-      '<div class="swipe-legend-title">Índice de crescimento — ' + fmtDate(older.date) + " → " + fmtDate(newer.date) + "</div>" +
+      '<div class="swipe-legend-title">' + I18N.t("indice_crescimento") + fmtDate(older.date) + " → " + fmtDate(newer.date) + "</div>" +
       rowsHtml;
   }
 
@@ -1296,7 +1308,22 @@
   }
   swipeRefOrthoSelect.addEventListener("change", applySwipeRefOrtho);
 
-  function onMapMoveDuringSwipe() { setSwipePosition(swipeCurrentPct); }
+  // requestAnimationFrame em vez de recalcular direto no handler -- "move"/
+  // "zoom" disparam no MEIO da propria atualizacao de transform do Leaflet;
+  // ler getBoundingClientRect() nesse instante exato as vezes pega uma
+  // posicao ainda nao assentada, deixando o recorte do swipe um frame
+  // atrasado (um pedaco com conteudo "fantasma" da posicao anterior). Adiar
+  // pro proximo frame garante que a leitura acontece depois do layout mais
+  // recente do navegador.
+  var swipeRafPending = false;
+  function onMapMoveDuringSwipe() {
+    if (swipeRafPending) { return; }
+    swipeRafPending = true;
+    requestAnimationFrame(function () {
+      swipeRafPending = false;
+      setSwipePosition(swipeCurrentPct);
+    });
+  }
 
   function sizeSwipePanes() {
     var mapSize = map.getSize();
@@ -1443,12 +1470,12 @@
     var pts = rec.points;
     var text;
     if (rec.mode === "area") {
-      text = pts.length < 3 ? "clique para adicionar vértices" : fmtAreaMeasure(polygonAreaM2(pts));
+      text = pts.length < 3 ? I18N.t("medicao_prompt") : fmtAreaMeasure(polygonAreaM2(pts));
       rec.label.setLatLng(pts.length >= 3 ? centroidLatLng(pts) : pts[pts.length - 1]);
     } else {
       var total = 0;
       for (var i = 1; i < pts.length; i++) { total += map.distance(pts[i - 1], pts[i]); }
-      text = pts.length < 2 ? "clique para adicionar vértices" : fmtDistanceMeasure(total);
+      text = pts.length < 2 ? I18N.t("medicao_prompt") : fmtDistanceMeasure(total);
       rec.label.setLatLng(pts[pts.length - 1]);
     }
     rec.label.setContent(text);
