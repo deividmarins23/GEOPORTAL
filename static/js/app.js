@@ -55,6 +55,12 @@
   map.getPane("swipePaneA").style.zIndex = 649;
   map.getPane("swipePaneB").style.zIndex = 650;
 
+  // pane do mapa de calor de crescimento -- substitui visualmente os dois
+  // panes do swipe (que ficam escondidos enquanto o calor esta ativo), mas
+  // ainda acima da ortofoto de fundo (pane padrao, zIndex 400).
+  map.createPane("heatmapPane");
+  map.getPane("heatmapPane").style.zIndex = 645;
+
   // pane da regua/medicao -- z-index acima dos dois panes do swipe, pra dar
   // pra medir mesmo com a comparacao ativa sem a linha/poligono ficar
   // escondido atras dos tiles/vegetacao do swipe.
@@ -892,6 +898,8 @@
   var swipeRefOrthoSelect = document.getElementById("swipeRefOrtho");
   var btnSwipeToggle = document.getElementById("btnSwipeToggle");
   var swipeRefOrthoLayer = null; // ortofoto de fundo opcional, comum aos dois lados (nao e' recortada pelo divisor)
+  var growthHeatmapActive = false;
+  var heatmapLayer = null; // grade colorida por celula, substitui as duas camadas do swipe quando ativo
   var swipeActive = false;
   var swipeCurrentPct = 50;
   // cada lado e' um array de { cid, layer } -- cid e' null pra ortofoto
@@ -1116,7 +1124,13 @@
     renderGrowthIndex(a, b);
 
     sizeSwipePanes();
-    map.on("move zoom zoomend moveend", onMapMoveDuringSwipe);
+    // "resize" (o Leaflet dispara sozinho quando a janela do navegador
+    // muda de tamanho, ex: maximizar/restaurar) faltava aqui -- sem isso,
+    // sizeSwipePanes() nunca era chamado de novo apos um resize puro (sem
+    // pan/zoom junto), entao os panes ficavam com a largura/altura antigas
+    // e o recorte do lado B saia errado, deixando so' o lado A visivel em
+    // tudo.
+    map.on("move zoom zoomend moveend resize", onMapMoveDuringSwipe);
 
     var mapWrap = document.getElementById("mapWrap");
     swipeDom.divider = document.createElement("div");
@@ -1154,21 +1168,21 @@
     buildSwipeLayers(a, "swipePaneA", "a").then(function (items) {
       swipeLayers.a = items;
       renderSwipeSideLegend("a", a);
-      if (swipeActive) {
+      if (swipeActive && !growthHeatmapActive) {
         items.forEach(function (it) { if (isSwipeItemVisible("a", it)) { it.layer.addTo(map); } });
       }
     });
     buildSwipeLayers(b, "swipePaneB", "b").then(function (items) {
       swipeLayers.b = items;
       renderSwipeSideLegend("b", b);
-      if (swipeActive) {
+      if (swipeActive && !growthHeatmapActive) {
         items.forEach(function (it) { if (isSwipeItemVisible("b", it)) { it.layer.addTo(map); } });
       }
     });
   }
 
   function deactivateSwipe() {
-    map.off("move zoom zoomend moveend", onMapMoveDuringSwipe);
+    map.off("move zoom zoomend moveend resize", onMapMoveDuringSwipe);
     (swipeLayers.a || []).forEach(function (it) { map.removeLayer(it.layer); });
     (swipeLayers.b || []).forEach(function (it) { map.removeLayer(it.layer); });
     swipeLayers.a = null;
@@ -1193,6 +1207,7 @@
     updateLegendPanelVisibility(); // volta a mostrar a legenda geral
     restoreNormalMapLayers();
     applySwipeRefOrtho(); // swipeActive ja' esta false aqui -- so' remove a ortofoto de fundo
+    disableGrowthHeatmap(); // idem -- swipeActive ja' false, so' limpa a grade de calor/legenda/estado
   }
 
   // O swipe so' recorta/mostra as camadas dos proprios panes (swipePaneA/B).
@@ -1239,6 +1254,7 @@
     if (!sameLocation) {
       container.innerHTML = "";
       container.hidden = true;
+      disableGrowthHeatmap();
       return;
     }
 
@@ -1281,10 +1297,162 @@
       );
     }).join("");
 
+    var heatmapAvailable = !!(a.meta.growthGrid && b.meta.growthGrid);
+    if (!heatmapAvailable) { disableGrowthHeatmap(); }
+    var heatmapRowHtml = heatmapAvailable
+      ? '<label class="growth-heatmap-toggle"><input type="checkbox" id="growthHeatmapToggle"' +
+          (growthHeatmapActive ? " checked" : "") + '> 🔥 ' + I18N.t("mostrar_heatmap") + "</label>"
+      : "";
+
     container.hidden = false;
     container.innerHTML =
       '<div class="swipe-legend-title">' + I18N.t("indice_crescimento") + fmtDate(older.date) + " → " + fmtDate(newer.date) + "</div>" +
-      rowsHtml;
+      rowsHtml + heatmapRowHtml;
+  }
+
+  document.getElementById("swipeGrowthIndex").addEventListener("change", function (e) {
+    if (e.target.id !== "growthHeatmapToggle") { return; }
+    if (e.target.checked) { enableGrowthHeatmap(); } else { disableGrowthHeatmap(); }
+  });
+
+  // Mesma classificacao de severidade usada no dashboard (dashboard.js) --
+  // duplicada aqui de proposito, cada pagina fica independente (mesmo
+  // padrao ja usado com fmtArea/fmtDate). 3 = precisa de acao, 2 = atencao,
+  // 1 = ok mas com vegetacao baixa, 0 = solo. Paineis/estruturas nunca
+  // contam. "Area de preocupacao" de uma celula = soma das classes com
+  // severidade >= 2 (mesmo conceito usado no Indice de Crescimento acima,
+  // so' que por celula da grade em vez de agregado pro voo inteiro).
+  var HEATMAP_SEVERITY_RULES = [
+    { weight: 3, re: /seletiva|(?:^|\s)alta\b/i },
+    { weight: 2, re: /leve/i },
+    { weight: 1, re: /ro[cç]o|baixa/i },
+    { weight: 0, re: /^solo$/i }
+  ];
+  function heatmapClassSeverity(name) {
+    for (var i = 0; i < HEATMAP_SEVERITY_RULES.length; i++) {
+      if (HEATMAP_SEVERITY_RULES[i].re.test(name || "")) { return HEATMAP_SEVERITY_RULES[i].weight; }
+    }
+    return null;
+  }
+  function cellConcernArea(areas) {
+    var total = 0;
+    Object.keys(areas || {}).forEach(function (name) {
+      if (defaultChartIncluded(name)) {
+        var sev = heatmapClassSeverity(name);
+        if (sev != null && sev >= 2) { total += areas[name]; }
+      }
+    });
+    return total;
+  }
+
+  function setSwipeDividerVisible(visible) {
+    ["divider", "labelA", "labelB"].forEach(function (k) {
+      if (swipeDom[k]) { swipeDom[k].style.display = visible ? "" : "none"; }
+    });
+  }
+
+  function enableGrowthHeatmap() {
+    if (!swipeSelectA.value || !swipeSelectB.value) { return; }
+    var a = flightFromSelectValue(swipeSelectA.value);
+    var b = flightFromSelectValue(swipeSelectB.value);
+    if (!a.meta.growthGrid || !b.meta.growthGrid) { return; }
+
+    growthHeatmapActive = true;
+    (swipeLayers.a || []).forEach(function (it) { map.removeLayer(it.layer); });
+    (swipeLayers.b || []).forEach(function (it) { map.removeLayer(it.layer); });
+    setSwipeDividerVisible(false);
+
+    Promise.all([
+      fetch("../data/" + a.meta.growthGrid).then(function (r) { return r.ok ? r.json() : null; }),
+      fetch("../data/" + b.meta.growthGrid).then(function (r) { return r.ok ? r.json() : null; })
+    ]).then(function (results) {
+      if (!growthHeatmapActive) { return; } // usuario desligou antes de terminar de carregar
+      var gridOld = a.date < b.date ? results[0] : results[1];
+      var gridNew = a.date < b.date ? results[1] : results[0];
+      if (!gridOld || !gridNew) { return; }
+      renderGrowthHeatmapLayer(gridOld, gridNew);
+    });
+  }
+
+  function disableGrowthHeatmap() {
+    growthHeatmapActive = false;
+    if (heatmapLayer) { map.removeLayer(heatmapLayer); heatmapLayer = null; }
+    if (swipeDom.heatmapLegend && swipeDom.heatmapLegend.parentNode) {
+      swipeDom.heatmapLegend.parentNode.removeChild(swipeDom.heatmapLegend);
+    }
+    swipeDom.heatmapLegend = null;
+    setSwipeDividerVisible(true);
+    if (swipeActive) {
+      (swipeLayers.a || []).forEach(function (it) { if (isSwipeItemVisible("a", it)) { it.layer.addTo(map); } });
+      (swipeLayers.b || []).forEach(function (it) { if (isSwipeItemVisible("b", it)) { it.layer.addTo(map); } });
+    }
+  }
+
+  // Cor (vermelho = cresceu, verde = reduziu -- mesma semantica ja usada no
+  // indice de crescimento/dashboard) E opacidade escalam com a magnitude da
+  // mudanca: celula sem mudanca fica quase invisivel (deixa a ortofoto de
+  // fundo aparecer), so' os pontos de maior diferenca ficam bem visiveis --
+  // sem isso, uma tinta uniforme cobrindo o talhao inteiro escondia onde a
+  // mudanca de verdade estava concentrada.
+  function heatmapCellStyle(delta, maxAbs) {
+    if (maxAbs <= 0) { return { stroke: false, fillOpacity: 0 }; }
+    var t = Math.max(-1, Math.min(1, delta / maxAbs));
+    var intensity = Math.abs(t);
+    var channel = Math.round(255 * (1 - intensity));
+    var color = t >= 0 ? "rgb(255," + channel + "," + channel + ")" : "rgb(" + channel + ",255," + channel + ")";
+    return { stroke: false, fillColor: color, fillOpacity: 0.12 + intensity * 0.58 };
+  }
+
+  function renderGrowthHeatmapLayer(gridOld, gridNew) {
+    if (heatmapLayer) { map.removeLayer(heatmapLayer); heatmapLayer = null; }
+
+    var cellsOld = {};
+    (gridOld.features || []).forEach(function (f) { cellsOld[f.properties.ix + "," + f.properties.iy] = f; });
+    var cellsNew = {};
+    (gridNew.features || []).forEach(function (f) { cellsNew[f.properties.ix + "," + f.properties.iy] = f; });
+
+    var keys = {};
+    Object.keys(cellsOld).forEach(function (k) { keys[k] = true; });
+    Object.keys(cellsNew).forEach(function (k) { keys[k] = true; });
+
+    var cellDeltas = Object.keys(keys).map(function (key) {
+      var fOld = cellsOld[key], fNew = cellsNew[key];
+      var concernOld = fOld ? cellConcernArea(fOld.properties.areas) : 0;
+      var concernNew = fNew ? cellConcernArea(fNew.properties.areas) : 0;
+      return { geometry: (fNew || fOld).geometry, delta: concernNew - concernOld };
+    });
+    var maxAbs = cellDeltas.reduce(function (m, c) { return Math.max(m, Math.abs(c.delta)); }, 0);
+
+    var features = cellDeltas.map(function (c) {
+      return { type: "Feature", properties: { delta: c.delta }, geometry: c.geometry };
+    });
+
+    heatmapLayer = L.geoJSON({ type: "FeatureCollection", features: features }, {
+      pane: "heatmapPane",
+      style: function (feature) {
+        return heatmapCellStyle(feature.properties.delta, maxAbs);
+      },
+      onEachFeature: function (feature, layer) {
+        var sign = feature.properties.delta > 0 ? "+" : "";
+        layer.bindTooltip(sign + feature.properties.delta.toFixed(1) + " m²", { sticky: true });
+      }
+    }).addTo(map);
+
+    renderHeatmapLegend();
+  }
+
+  function renderHeatmapLegend() {
+    if (swipeDom.heatmapLegend && swipeDom.heatmapLegend.parentNode) {
+      swipeDom.heatmapLegend.parentNode.removeChild(swipeDom.heatmapLegend);
+    }
+    var el = document.createElement("div");
+    el.className = "heatmap-legend";
+    el.innerHTML =
+      '<span>' + I18N.t("heatmap_reduziu") + '</span>' +
+      '<div class="heatmap-legend-bar"></div>' +
+      '<span>' + I18N.t("heatmap_cresceu") + '</span>';
+    document.getElementById("mapWrap").appendChild(el);
+    swipeDom.heatmapLegend = el;
   }
 
   // Ortofoto de fundo opcional, comum aos dois lados do swipe (nao e'

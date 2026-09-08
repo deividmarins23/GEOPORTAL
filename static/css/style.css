@@ -451,6 +451,44 @@ a.icon-btn { text-decoration: none; }
 .growth-name { flex: 1; color: var(--text); font-weight: 600; }
 .growth-areas { color: var(--text-muted); white-space: nowrap; }
 
+.growth-heatmap-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  cursor: pointer;
+}
+
+.heatmap-legend {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  box-shadow: var(--shadow);
+}
+.heatmap-legend-bar {
+  width: 100px;
+  height: 10px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #2ecc71, #ffffff, #e74c3c);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
 /* Ferramenta de swipe entre duas ortofotos */
 .swipe-divider {
   position: absolute;

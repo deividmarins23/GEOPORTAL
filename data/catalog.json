@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07 16:48",
+  "generatedAt": "2026-09-08 11:30",
   "projects": [
     {
       "id": "solar-lavras",
@@ -50,7 +50,8 @@
               "count": 200,
               "areaM2": 29631.96
             }
-          ]
+          ],
+          "growthGrid": "solar-lavras/2026-08-26--pcs09/growth_grid.json"
         },
         {
           "date": "2026-08-03",
@@ -97,7 +98,8 @@
               "count": 141,
               "areaM2": 44843.02
             }
-          ]
+          ],
+          "growthGrid": "solar-lavras/2026-08-03--pcs09/growth_grid.json"
         }
       ]
     }

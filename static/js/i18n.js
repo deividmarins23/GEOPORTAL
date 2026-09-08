@@ -66,6 +66,9 @@
     sufixo_vegetacao: { pt: " (Vegetação)", en: " (Vegetation)" },
     indice_crescimento: { pt: "Índice de crescimento — ", en: "Growth index — " },
     legenda_lado: { pt: "Vegetação ", en: "Vegetation " },
+    mostrar_heatmap: { pt: "Mostrar mapa de calor de crescimento", en: "Show growth heatmap" },
+    heatmap_reduziu: { pt: "reduziu", en: "decreased" },
+    heatmap_cresceu: { pt: "cresceu", en: "increased" },
 
     crs_origem: { pt: "CRS de origem:", en: "Source CRS:" },
     publicado_em: { pt: "Publicado em:", en: "Published as:" },
